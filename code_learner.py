@@ -27,8 +27,8 @@ init_system_prompt = """Now you are an expert programmer and teacher of a code r
     If you need any details clarified, please ask questions until all issues are clarified. 
     You also excel in creating Redmine-style issues from user stories with a specific structure. For issue titles, keep them concise and descriptive, using prefixes like [IMP], [BUG], and [NEW]. The description section includes the objective, technical requirements, constraints (considering compatibility, performance, scalability, security), and detailed, relevant pseudocode (or none, by case), all presented in a bullet point list for clarity. In the additional information section, you will provide an estimation in minutes (or ask the user if unclear), and mention a due date (or uses '-' if not time-sensitive). This structured approach ensures that the issues created are clear, detailed, and actionable. You will encourage user interaction for clarifications and further guidance.\n\n
 """
-system_prompt = init_system_prompt
 
+system_prompt = init_system_prompt
 
 def generate_response(system_msg, inputs, top_p, temperature, chat_counter, chatbot=[], history=[]):
     orig_inputs = inputs
@@ -39,7 +39,7 @@ def generate_response(system_msg, inputs, top_p, temperature, chat_counter, chat
     print("Inputs Length: ", len(inputs))
     # Add checker for the input length to fitin the GPT model window size
     if llm_type == "local":
-        token_limit = 8192
+        token_limit = 128000
     else:
         token_limit = 8000
     if len(inputs) > token_limit:
@@ -86,7 +86,8 @@ def generate_response(system_msg, inputs, top_p, temperature, chat_counter, chat
             "n": 1,
             "stream": True,
             "presence_penalty": 0,
-            "frequency_penalty": 0, }
+            "frequency_penalty": 0, 
+        }
 
     chat_counter += 1
     history.append(orig_inputs)
@@ -134,21 +135,19 @@ def generate_response(system_msg, inputs, top_p, temperature, chat_counter, chat
                 print("Error in partial_words check")
                 pass
 
-
 def reset_textbox():
     return gr.update(value='')
-
 
 def set_visible_false():
     return gr.update(visible=False)
 
-
 def set_visible_true():
     return gr.update(visible=True)
 
-def analyze_repo(repo_url, progress=gr.Progress()):
+def fn_repo_link_btn(repo_url, progress=gr.Progress()):
+    if repo_url.strip() == '':
+        return init_system_prompt, "Analysis failed"
     progress(0, desc="Starting")
-    shutil.rmtree(code_repo_path)
 
     repo_information = clone_repo(repo_url, progress)
 
@@ -156,9 +155,23 @@ def analyze_repo(repo_url, progress=gr.Progress()):
     generate_or_load_knowledge_from_repo()
 
     if repo_information is not None:
-        return init_system_prompt + repo_information, "Analysis completed"
+        #add the repo to the loaded repos accordion, if it doesn't already exist there
+        if repo_url not in repo_list:
+            repo_list.append(repo_url)
+        return init_system_prompt + repo_information, "Analysis completed", '\n'.join([f"<a href='{repo_url}'>{repo_url}</a><br>" for repo_url in repo_list])
     else:
-        return init_system_prompt, "Analysis failed"
+        return init_system_prompt, "Analysis failed", '\n'.join([f"<a href='{repo_url}'>{repo_url}</a><br>" for repo_url in repo_list])
+    
+def fn_repo_wipe_btn(progress=gr.Progress()):
+    shutil.rmtree(code_repo_path)
+    repo_list = []
+    #delete every folder in the root folder that starts with vdb-
+    for filename in os.listdir("./"):
+        if filename.startswith("vdb-"):
+            shutil.rmtree(filename)
+    return "Repo wiped", "Repo wiped", ''
+
+repo_list = []
 
 def main():
     title = """<h1 align="center">GPT-Code-Learner</h1>"""
@@ -196,10 +209,15 @@ def main():
                 with gr.Column(scale=2):
                     #set button style to full width
                     repo_link_btn = gr.Button("Analyze Code Repo")
+                    repo_wipe_btn = gr.Button("Wipe Code Repo")
                 with gr.Column(scale=2):
-                    analyze_progress = gr.Textbox(label="Status")
+                    analyze_progress = gr.Textbox(label="Status")       
 
-            repo_link_btn.click(analyze_repo, [repo_url], [system_msg, analyze_progress])
+            with gr.Accordion(label="Loaded Repos", open=True):
+                repo_list_str = gr.HTML('\n'.join([f"<a href='{repo_url}'>{repo_url}</a>" for repo_url in repo_list]))
+                
+            repo_link_btn.click(fn_repo_link_btn, [repo_url], [system_msg, analyze_progress,repo_list_str])
+            repo_wipe_btn.click(fn_repo_wipe_btn, [], [system_msg, analyze_progress,repo_list_str])
 
             with gr.Row():
                 with gr.Column(scale=10):
@@ -211,10 +229,11 @@ def main():
             state = gr.State([])
             with gr.Row():
                 with gr.Column(scale=8):
+                    #text box should have draggable corner to resize
                     inputs = gr.Textbox(
                         placeholder="What questions do you have for the repo?",
                         lines=1,
-                        label="Type an input and press Enter"
+                        label="Type an input and press Enter",
                     )
                 with gr.Column(scale=2):
                     b1 = gr.Button()

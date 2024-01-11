@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 from termcolor import colored
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
 import requests
 
@@ -45,6 +45,6 @@ def get_openai_response(system_prompt, user_prompt, model="gpt-3.5-turbo", tempe
         SystemMessage(content=system_prompt),
         HumanMessage(content=user_prompt)
     ]
-    response = chat(messages)
+    response = chat.invoke(messages)
     print(response)
     return response.content
