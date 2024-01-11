@@ -2,10 +2,10 @@ import openai
 from dotenv import load_dotenv, find_dotenv
 import os
 from supabase import create_client, Client
-from langchain_community.embeddings.openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, SupabaseVectorStore
-from langchain.document_loaders import TextLoader, PyPDFLoader
+from langchain_community.document_loaders import TextLoader, PyPDFLoader
 import requests
 from bs4 import BeautifulSoup
 import pickle

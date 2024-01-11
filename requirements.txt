@@ -6,6 +6,8 @@ openai
 tenacity
 supabase
 langchain
+langchain-community
+langchain-openai
 tiktoken
 beautifulsoup4
 faiss-cpu

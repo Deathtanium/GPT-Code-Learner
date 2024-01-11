@@ -1,8 +1,7 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 from termcolor import colored
-from langchain.llms import OpenAI
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
 import requests
 

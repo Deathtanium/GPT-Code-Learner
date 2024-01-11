@@ -5,6 +5,7 @@ import os
 from termcolor import colored
 from repo_parser import clone_repo, generate_or_load_knowledge_from_repo
 import tool_planner
+import shutil
 
 llm_type = os.environ.get('LLM_TYPE', "local")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -145,9 +146,10 @@ def set_visible_false():
 def set_visible_true():
     return gr.update(visible=True)
 
-
 def analyze_repo(repo_url, progress=gr.Progress()):
     progress(0, desc="Starting")
+    shutil.rmtree(code_repo_path)
+
     repo_information = clone_repo(repo_url, progress)
 
     progress(0.6, desc="Building Knowledge Base")
@@ -198,7 +200,6 @@ def main():
                     analyze_progress = gr.Textbox(label="Status")
 
             repo_link_btn.click(analyze_repo, [repo_url], [system_msg, analyze_progress])
-            wipe_repo_btn.click()
 
             with gr.Row():
                 with gr.Column(scale=10):

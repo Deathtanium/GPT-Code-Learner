@@ -9,6 +9,8 @@ from pathlib import Path
 import util
 import subprocess
 import gradio as gr
+import re
+import json
 
 
 def clone_repo(git_url, progress=gr.Progress(), code_repo_path="./code_repo"):
@@ -35,11 +37,15 @@ def clone_repo(git_url, progress=gr.Progress(), code_repo_path="./code_repo"):
 
     return readme_info + repo_structure
 
+ignore_list=['.git', 'node_modules', '__pycache__', '.idea', '.vscode']
+ignore_ext=['csv']
 
-def generate_knowledge_from_repo(dir_path, ignore_list):
+def generate_knowledge_from_repo(dir_path):
     knowledge = {"known_docs": [], "known_text": {"pages": [], "metadatas": []}}
     for root, dirs, files in os.walk(dir_path):
         dirs[:] = [d for d in dirs if d not in ignore_list]  # modify dirs in-place
+        #use regex to filter out files with certain extensions
+        files[:] = [f for f in files if not any(re.findall(rf"\.{ext}$", f) for ext in ignore_ext)]
         for file in files:
             if file in ignore_list:
                 continue
@@ -47,10 +53,8 @@ def generate_knowledge_from_repo(dir_path, ignore_list):
             try:
                 # Using a more general way for code file parsing
                 knowledge["known_docs"].extend(load_documents([filepath]))
-
             except Exception as e:
                 print(f"Failed to process {filepath} due to error: {str(e)}")
-
     return knowledge
 
 
@@ -158,9 +162,7 @@ def generate_or_load_knowledge_from_repo(dir_path="./code_repo"):
         vdb = load_local_vdb(vdb_path)
     else:
         print(colored("Generating VDB from repo...", "green"))
-        ignore_list = ['.git', 'node_modules', '__pycache__', '.idea',
-                       '.vscode']
-        knowledge = generate_knowledge_from_repo(dir_path, ignore_list)
+        knowledge = generate_knowledge_from_repo(dir_path)
         vdb = local_vdb(knowledge, vdb_path=vdb_path)
     print(colored("VDB generated!", "green"))
     return vdb

@@ -12,7 +12,7 @@ GPT-Code-Learner supports running the LLM models locally. In general, GPT-Code-L
 
 Please refer to [Local LLM](docs/LocalLLM.md) for more details.
 
-<span style="color:red">Note: Due to the current capability of local LLM, the performance of GPT-Code-Learner is not as good as the online version. </span>
+<span style="color:red">Note: Due to the current capability of local LLM's, the performance of GPT-Code-Learner is not as good as the online version. </span>
 
 ## Installation
 
@@ -32,6 +32,13 @@ If you want to run the whole program locally, please change the following line i
 LLM_TYPE="local"
 EMBEDDING_TYPE="local"
 ```
+To specify the model and completions API (for local or custom LLM), add the following lines to the `.env` file:
+```
+LOCAL_MODEL_NAME="gpt-4"
+LOCAL_OPENAI_API="http://localhost:1337/v1/chat/completions"
+```
+
+
 3. Put the repo url (e.g., Github link) in the `Repo Link` textbox and click `Analyze Code Repo` button in the GUI. Or manually clone the repo you want to learn into `code_repo` folder:
 ```
 cd code_repo
