@@ -2,14 +2,14 @@ import openai
 from dotenv import load_dotenv, find_dotenv
 import os
 from supabase import create_client, Client
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_community.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
-from langchain.vectorstores import FAISS, SupabaseVectorStore
+from langchain_community.vectorstores import FAISS, SupabaseVectorStore
 from langchain.document_loaders import TextLoader, PyPDFLoader
 import requests
 from bs4 import BeautifulSoup
 import pickle
-from langchain import OpenAI
+from langchain_community.llms import OpenAI
 from langchain.chains import VectorDBQAWithSourcesChain
 from langchain.embeddings.base import Embeddings
 from sentence_transformers import SentenceTransformer
@@ -18,7 +18,7 @@ from termcolor import colored
 
 class LocalHuggingFaceEmbeddings(Embeddings):
     def __init__(self, model_id="all-mpnet-base-v2"):
-        self.model = SentenceTransformer(model_id)
+        self.model = SentenceTransformer(model_id, device='cpu')
 
     def embed_documents(self, texts):
         embeddings = self.model.encode(texts)
@@ -84,17 +84,21 @@ def local_vdb(knowledge, vdb_path=None):
         embedding = OpenAIEmbeddings(disallowed_special=())
     print(colored("Embedding documents...", "green"))
     faiss_store = FAISS.from_documents(knowledge["known_docs"], embedding=embedding)
+    """
     if vdb_path is not None:
         with open(vdb_path, "wb") as f:
             pickle.dump(faiss_store, f)
-
+    """
+    faiss_store.save_local(vdb_path)
     return faiss_store
 
 
 def load_local_vdb(vdb_path):
+    """
     with open(vdb_path, "rb") as f:
         faiss_store = pickle.load(f)
-
+    """
+    faiss_store = FAISS.load_local(vdb_path,OpenAIEmbeddings(disallowed_special=()))
     return faiss_store
 
 

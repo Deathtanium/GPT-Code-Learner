@@ -194,3 +194,14 @@ if __name__ == '__main__':
     query = "How to use the knowledge base?"
     context = get_repo_context(query, vdb)
     print(context)
+
+def wipe_repo_store():
+    code_repo_path = "./code_repo"
+    vdb_path = "./vdb-" + get_repo_names(code_repo_path) + ".pkl"
+    if os.path.isfile(vdb_path):
+        os.remove(vdb_path)
+        print(colored("Local VDB removed!", "green"))
+    else:
+        print(colored("No local VDB found!", "green"))
+    os.rmdir(code_repo_path)
+    print(colored("Code repo removed!", "green"))

@@ -7,13 +7,13 @@ from repo_parser import clone_repo, generate_or_load_knowledge_from_repo
 import tool_planner
 
 llm_type = os.environ.get('LLM_TYPE', "local")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "null")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 if llm_type == "local":
-    API_URL = "http://localhost:8080/v1/chat/completions"
-    model = "ggml-gpt4all-j"
+    API_URL = os.environ.get('LOCAL_OPENAI_API')
+    model = os.environ.get('LOCAL_MODEL_NAME', "openchat_3.5")
 else:
     API_URL = "https://api.openai.com/v1/chat/completions"
-    model = "gpt-3.5-turbo"
+    model = "gpt-4-1106-preview"
 
 code_repo_path = "./code_repo"
 
@@ -23,7 +23,8 @@ init_system_prompt = """Now you are an expert programmer and teacher of a code r
     Please think the explanation step-by-step.
     Please answer the questions based on your knowledge, and you can also refer to the provided related code snippets.
     The README.md file and the repo structure are also available for your reference.
-    If you need any details clarified, please ask questions until all issues are clarified. \n\n
+    If you need any details clarified, please ask questions until all issues are clarified. 
+    You also excel in creating Redmine-style issues from user stories with a specific structure. For issue titles, keep them concise and descriptive, using prefixes like [IMP], [BUG], and [NEW]. The description section includes the objective, technical requirements, constraints (considering compatibility, performance, scalability, security), and detailed, relevant pseudocode (or none, by case), all presented in a bullet point list for clarity. In the additional information section, you will provide an estimation in minutes (or ask the user if unclear), and mention a due date (or uses '-' if not time-sensitive). This structured approach ensures that the issues created are clear, detailed, and actionable. You will encourage user interaction for clarifications and further guidance.\n\n
 """
 system_prompt = init_system_prompt
 
@@ -37,7 +38,7 @@ def generate_response(system_msg, inputs, top_p, temperature, chat_counter, chat
     print("Inputs Length: ", len(inputs))
     # Add checker for the input length to fitin the GPT model window size
     if llm_type == "local":
-        token_limit = 2000
+        token_limit = 8192
     else:
         token_limit = 8000
     if len(inputs) > token_limit:
@@ -191,11 +192,13 @@ def main():
                         label="Repo Link"
                     )
                 with gr.Column(scale=2):
-                    repo_link_btn = gr.Button("Analyze Code Repo").style(full_width=True)
+                    #set button style to full width
+                    repo_link_btn = gr.Button("Analyze Code Repo")
                 with gr.Column(scale=2):
                     analyze_progress = gr.Textbox(label="Status")
 
             repo_link_btn.click(analyze_repo, [repo_url], [system_msg, analyze_progress])
+            wipe_repo_btn.click()
 
             with gr.Row():
                 with gr.Column(scale=10):
@@ -213,7 +216,7 @@ def main():
                         label="Type an input and press Enter"
                     )
                 with gr.Column(scale=2):
-                    b1 = gr.Button().style(full_width=True)
+                    b1 = gr.Button()
 
             with gr.Accordion(label="Examples", open=True):
                 gr.Examples(
@@ -243,8 +246,7 @@ def main():
         b1.click(reset_textbox, [], [inputs])
         inputs.submit(reset_textbox, [], [inputs])
 
-    demo.queue(max_size=99, concurrency_count=20).launch(debug=True)
-
+    demo.launch(debug=True, max_threads=10)
 
 if __name__ == "__main__":
     main()

@@ -39,7 +39,7 @@ git clone <repo_url>
 ```
 4. Run the GPT-Code-Learner. If you use local LLM models, please run the local model before running the GPT-Code-Learner. Please refer to [Local LLM](docs/LocalLLM.md) for more details.
 ```
-python run.py
+python main.py
 ```
 
 5. Open your web browser at http://127.0.0.1:7860 to ask any questions about your repo
